@@ -229,10 +229,10 @@ app.post('/api/demo/reset', (_req, res) => {
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 
-const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist');
-if (fs.existsSync(dist)) {
-  app.use(express.static(dist));
-  app.get('*', (_req, res) => res.sendFile(path.join(dist, 'index.html')));
+const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+  app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -242,7 +242,18 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ error: status >= 500 && !err.status ? 'Unexpected server error.' : err.message, ...(err.data || {}) });
 });
 
-const port = Number(process.env.PORT) || 8787;
-app.listen(port, () => {
-  console.log(`GPS PowerX API on http://localhost:${port} — ${isLive() ? 'LIVE postcode API configured' : 'DEMO MODE (test postcode data)'}`);
-});
+// Export the Express app for Vercel.
+export default app;
+
+// Start a local server only when running on your computer.
+if (process.env.VERCEL !== '1') {
+  const port = Number(process.env.PORT) || 8787;
+
+  app.listen(port, () => {
+    console.log(
+      `GPS PowerX API on http://localhost:${port} — ${
+        isLive() ? 'LIVE postcode API configured' : 'DEMO MODE (test postcode data)'
+      }`
+    );
+  });
+}
